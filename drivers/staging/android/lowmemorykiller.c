@@ -18,6 +18,7 @@
  * and processes may not get killed until the normal oom killer is triggered.
  *
  * Copyright (C) 2007-2008 Google, Inc.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -431,10 +432,8 @@ static void mark_lmk_victim(struct task_struct *tsk)
 {
 	struct mm_struct *mm = tsk->mm;
 
-	if (!cmpxchg(&tsk->signal->oom_mm, NULL, mm)) {
+	if (!cmpxchg(&tsk->signal->oom_mm, NULL, mm))
 		atomic_inc(&tsk->signal->oom_mm->mm_count);
-		set_bit(MMF_OOM_VICTIM, &mm->flags);
-	}
 }
 
 static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
@@ -493,7 +492,7 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		lowmem_print(5, "lowmem_scan %lu, %x, return 0\n",
 			     sc->nr_to_scan, sc->gfp_mask);
 		mutex_unlock(&scan_mutex);
-		return 0;
+		return SHRINK_STOP;
 	}
 
 	selected_oom_score_adj = min_score_adj;
@@ -510,36 +509,17 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 		if (test_task_flag(tsk, TIF_MM_RELEASED))
 			continue;
 
-		if (oom_reaper) {
-			p = find_lock_task_mm(tsk);
-			if (!p)
-				continue;
-
-			if (test_bit(MMF_OOM_VICTIM, &p->mm->flags)) {
-				if (test_bit(MMF_OOM_SKIP, &p->mm->flags)) {
-					task_unlock(p);
-					continue;
-				} else if (time_before_eq(jiffies,
-						lowmem_deathpending_timeout)) {
-					task_unlock(p);
-					rcu_read_unlock();
-					mutex_unlock(&scan_mutex);
-					return 0;
-				}
+		if (time_before_eq(jiffies, lowmem_deathpending_timeout)) {
+			if (test_task_lmk_waiting(tsk)) {
+				rcu_read_unlock();
+				mutex_unlock(&scan_mutex);
+				return 0;
 			}
-		} else {
-			if (time_before_eq(jiffies,
-					   lowmem_deathpending_timeout))
-				if (test_task_lmk_waiting(tsk)) {
-					rcu_read_unlock();
-					mutex_unlock(&scan_mutex);
-					return 0;
-				}
-
-			p = find_lock_task_mm(tsk);
-			if (!p)
-				continue;
 		}
+
+		p = find_lock_task_mm(tsk);
+		if (!p)
+			continue;
 
 		oom_score_adj = p->signal->oom_score_adj;
 		if (oom_score_adj < min_score_adj) {
@@ -580,15 +560,13 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 
 		task_lock(selected);
 		send_sig(SIGKILL, selected, 0);
-		if (selected->mm) {
+		if (selected->mm)
 			task_set_lmk_waiting(selected);
-			if (!test_bit(MMF_OOM_SKIP, &selected->mm->flags) &&
-			    oom_reaper) {
-				mark_lmk_victim(selected);
-				wake_oom_reaper(selected);
-			}
-		}
+		if (oom_reaper)
+			mark_lmk_victim(selected);
 		task_unlock(selected);
+		if (oom_reaper)
+			wake_oom_reaper(selected);
 		trace_lowmemory_kill(selected, cache_size, cache_limit, free);
 		lowmem_print(1, "Killing '%s' (%d) (tgid %d), adj %hd,\n"
 			"to free %ldkB on behalf of '%s' (%d) because\n"
@@ -637,7 +615,10 @@ static unsigned long lowmem_scan(struct shrinker *s, struct shrink_control *sc)
 	lowmem_print(4, "lowmem_scan %lu, %x, return %lu\n",
 		     sc->nr_to_scan, sc->gfp_mask, rem);
 	mutex_unlock(&scan_mutex);
-	return rem;
+	if (rem == 0)
+		return SHRINK_STOP;
+	else
+		return rem;
 }
 
 static struct shrinker lowmem_shrinker = {
