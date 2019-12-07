@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -143,7 +143,6 @@ struct vidc_freq_data {
 	struct list_head list;
 	u32 device_addr;
 	unsigned long freq;
-	bool turbo;
 };
 
 struct vidc_input_cr_data {
@@ -363,7 +362,7 @@ struct msm_vidc_core {
 
 struct msm_vidc_inst {
 	struct list_head list;
-	struct mutex sync_lock, lock, flush_lock;
+	struct mutex sync_lock, lock;
 	struct msm_vidc_core *core;
 	enum session_type session_type;
 	void *session;
@@ -429,7 +428,7 @@ struct msm_vidc_ctrl {
 	s64 maximum;
 	s64 default_value;
 	u32 step;
-	u64 menu_skip_mask;
+	u32 menu_skip_mask;
 	u32 flags;
 	const char * const *qmenu;
 };
@@ -458,7 +457,6 @@ struct msm_vidc_buffer {
 void msm_comm_handle_thermal_event(void);
 void *msm_smem_new_client(enum smem_type mtype,
 		void *platform_resources, enum session_type stype);
-void msm_smem_set_tme_encode_mode(struct smem_client *client, bool enable);
 int msm_smem_alloc(struct smem_client *client,
 		size_t size, u32 align, u32 flags, enum hal_buffer buffer_type,
 		int map_kernel, struct msm_smem *smem);

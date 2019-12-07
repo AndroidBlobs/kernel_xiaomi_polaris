@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1523,11 +1523,6 @@ static int try_get_ctrl(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 	case V4L2_CID_MPEG_VIDC_VIDEO_TME_PAYLOAD_VERSION:
 		ctrl->val = inst->capability.tme_version;
 		break;
-	case V4L2_CID_MPEG_VIDC_VIDEO_STREAM_FORMAT:
-		ctrl->val =
-			inst->capability.nal_stream_format.
-				nal_stream_format_supported;
-		break;
 	default:
 		/*
 		 * Other controls aren't really volatile, shouldn't need to
@@ -1618,7 +1613,6 @@ void *msm_vidc_open(int core_id, int session_type)
 	mutex_init(&inst->bufq[CAPTURE_PORT].lock);
 	mutex_init(&inst->bufq[OUTPUT_PORT].lock);
 	mutex_init(&inst->lock);
-	mutex_init(&inst->flush_lock);
 
 	INIT_MSM_VIDC_LIST(&inst->scratchbufs);
 	INIT_MSM_VIDC_LIST(&inst->freqs);
@@ -1729,7 +1723,6 @@ fail_mem_client:
 	mutex_destroy(&inst->bufq[CAPTURE_PORT].lock);
 	mutex_destroy(&inst->bufq[OUTPUT_PORT].lock);
 	mutex_destroy(&inst->lock);
-	mutex_destroy(&inst->flush_lock);
 
 	DEINIT_MSM_VIDC_LIST(&inst->scratchbufs);
 	DEINIT_MSM_VIDC_LIST(&inst->persistbufs);
@@ -1853,7 +1846,6 @@ int msm_vidc_destroy(struct msm_vidc_inst *inst)
 	mutex_destroy(&inst->bufq[CAPTURE_PORT].lock);
 	mutex_destroy(&inst->bufq[OUTPUT_PORT].lock);
 	mutex_destroy(&inst->lock);
-	mutex_destroy(&inst->flush_lock);
 
 	msm_vidc_debugfs_deinit_inst(inst);
 
