@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015-2017, The Linux Foundation.All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -132,9 +133,6 @@ struct dsi_display_clk_info {
  * @is_active:        Is display active.
  * @is_cont_splash_enabled:  Is continuous splash enabled
  * @display_lock:     Mutex for dsi_display interface.
- * @disp_te_gpio:     GPIO for panel TE interrupt.
- * @is_te_irq_enabled:bool to specify whether TE interrupt is enabled.
- * @esd_te_gate:      completion gate to signal TE interrupt.
  * @ctrl_count:       Number of DSI interfaces required by panel.
  * @ctrl:             Controller information for DSI display.
  * @panel:            Handle to DSI panel.
@@ -145,8 +143,6 @@ struct dsi_display_clk_info {
  *		      index into the ctrl[MAX_DSI_CTRLS_PER_DISPLAY] array.
  * @cmd_master_idx:   The master controller for sending DSI commands to panel.
  * @video_master_idx: The master controller for enabling video engine.
- * @cached_clk_rate:  The cached DSI clock rate set dynamically by sysfs.
- * @clkrate_change_pending: Flag indicating the pending DSI clock re-enabling.
  * @clock_info:       Clock sourcing for DSI display.
  * @config:           DSI host configuration information.
  * @lane_map:         Lane mapping between DSI host and Panel.
@@ -165,7 +161,6 @@ struct dsi_display_clk_info {
  * @root:             Debugfs root directory
  * @misr_enable       Frame MISR enable/disable
  * @misr_frame_count  Number of frames to accumulate the MISR value
- * @esd_trigger       field indicating ESD trigger through debugfs
  */
 struct dsi_display {
 	struct platform_device *pdev;
@@ -173,14 +168,12 @@ struct dsi_display {
 	struct drm_connector *drm_conn;
 
 	const char *name;
+	bool is_prim_display;
 	const char *display_type;
 	struct list_head list;
 	bool is_active;
 	bool is_cont_splash_enabled;
 	struct mutex display_lock;
-	int disp_te_gpio;
-	bool is_te_irq_enabled;
-	struct completion esd_te_gate;
 
 	u32 ctrl_count;
 	struct dsi_display_ctrl ctrl[MAX_DSI_CTRLS_PER_DISPLAY];
@@ -195,10 +188,6 @@ struct dsi_display {
 	u32 clk_master_idx;
 	u32 cmd_master_idx;
 	u32 video_master_idx;
-
-	/* dynamic DSI clock info*/
-	u32  cached_clk_rate;
-	atomic_t clkrate_change_pending;
 
 	struct dsi_display_clk_info clock_info;
 	struct dsi_host_config config;
@@ -231,7 +220,6 @@ struct dsi_display {
 
 	bool misr_enable;
 	u32 misr_frame_count;
-	u32 esd_trigger;
 	/* multiple dsi error handlers */
 	struct workqueue_struct *err_workq;
 	struct work_struct fifo_underflow_work;
@@ -543,6 +531,8 @@ void dsi_display_enable_event(struct dsi_display *display,
 		bool enable);
 
 int dsi_display_set_backlight(void *display, u32 bl_lvl);
+
+int dsi_panel_set_doze_backlight(struct dsi_display *display, u32 bl_lvl);
 
 /**
  * dsi_display_check_status() - check if panel is dead or alive

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -547,16 +548,6 @@ int dsi_ctrl_set_cmd_engine_state(struct dsi_ctrl *dsi_ctrl,
 				  enum dsi_engine_state state);
 
 /**
- * dsi_ctrl_validate_host_state() - validate DSI ctrl host state
- * @dsi_ctrl:            DSI Controller handle.
- *
- * Validate DSI cotroller host state
- *
- * Return: boolean indicating whether host is not initalized.
- */
-bool dsi_ctrl_validate_host_state(struct dsi_ctrl *dsi_ctrl);
-
-/**
  * dsi_ctrl_set_vid_engine_state() - set video engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
@@ -721,13 +712,6 @@ int dsi_message_validate_tx_mode(struct dsi_ctrl *dsi_ctrl, u32 cmd_len,
 void dsi_ctrl_isr_configure(struct dsi_ctrl *dsi_ctrl, bool enable);
 
 /**
- * dsi_ctrl_mask_error_status_interrupts() - API to mask dsi ctrl error status
- *                                           interrupts
- * @dsi_ctrl:              DSI controller handle.
- */
-void dsi_ctrl_mask_error_status_interrupts(struct dsi_ctrl *dsi_ctrl);
-
-/**
  * dsi_ctrl_irq_update() - Put a irq vote to process DSI error
  *				interrupts at any time.
  * @dsi_ctrl:              DSI controller handle.
@@ -742,10 +726,8 @@ int dsi_ctrl_get_host_engine_init_state(struct dsi_ctrl *dsi_ctrl,
 		bool *state);
 
 /**
- * dsi_ctrl_wait_for_cmd_mode_mdp_idle() - Wait for command mode engine not to
- *				     be busy sending data from display engine.
- * @dsi_ctrl:                     DSI controller handle.
+ * dsi_ctrl_update_host_init_state() - Set the host initialization state
  */
-int dsi_ctrl_wait_for_cmd_mode_mdp_idle(struct dsi_ctrl *dsi_ctrl);
+int dsi_ctrl_update_host_init_state(struct dsi_ctrl *dsi_ctrl, bool en);
 
 #endif /* _DSI_CTRL_H_ */

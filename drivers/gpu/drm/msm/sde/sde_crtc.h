@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -199,7 +199,6 @@ struct sde_crtc_event {
  * @dirty_list    : list of color processing features are dirty
  * @ad_dirty: list containing ad properties that are dirty
  * @ad_active: list containing ad properties that are active
- * @ad_vsync_count : count of vblank since last reset for AD
  * @crtc_lock     : crtc lock around create, destroy and access.
  * @frame_pending : Whether or not an update is pending
  * @frame_events  : static allocation of in-flight frame events
@@ -267,7 +266,6 @@ struct sde_crtc {
 	struct list_head ad_dirty;
 	struct list_head ad_active;
 	struct list_head user_event_list;
-	u32 ad_vsync_count;
 
 	struct mutex crtc_lock;
 	struct mutex crtc_cp_lock;
@@ -395,9 +393,6 @@ struct sde_crtc_respool {
  * @new_perf: new performance state being requested
  * @sbuf_cfg: stream buffer configuration
  * @sbuf_prefill_line: number of line for inline rotator prefetch
- * @sbuf_clk_rate : previous and current user specified inline rotator clock
- * @sbuf_clk_shifted : whether or not sbuf_clk_rate has been shifted as part
- *	of crtc atomic check
  */
 struct sde_crtc_state {
 	struct drm_crtc_state base;
@@ -429,8 +424,6 @@ struct sde_crtc_state {
 	struct sde_core_perf_params new_perf;
 	struct sde_ctl_sbuf_cfg sbuf_cfg;
 	u32 sbuf_prefill_line;
-	u64 sbuf_clk_rate[2];
-	bool sbuf_clk_shifted;
 
 	struct sde_crtc_respool rp;
 };
@@ -777,12 +770,5 @@ void sde_crtc_timeline_status(struct drm_crtc *crtc);
  */
 void sde_crtc_update_cont_splash_mixer_settings(
 		struct drm_crtc *crtc);
-
-/**
- * sde_crtc_get_sbuf_clk - get user specified sbuf clock settings
- * @state: Pointer to DRM crtc state object
- * Returns: Filtered sbuf clock setting from user space
- */
-uint64_t sde_crtc_get_sbuf_clk(struct drm_crtc_state *state);
 
 #endif /* _SDE_CRTC_H_ */

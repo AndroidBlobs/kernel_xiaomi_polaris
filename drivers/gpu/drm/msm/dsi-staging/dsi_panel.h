@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -35,6 +36,11 @@
 #define DSI_CMD_PPS_SIZE 135
 
 #define DSI_MODE_MAX 5
+#define BUF_LEN_MAX    256
+
+#define PANEL_BL_INFO_NUM    4
+
+#define HIST_BL_OFFSET_LIMIT 48
 
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,
@@ -94,6 +100,7 @@ struct dsi_backlight_config {
 	u32 bl_scale_ad;
 
 	int en_gpio;
+	bool dcs_type_ss;
 	/* PWM params */
 	bool pwm_pmi_control;
 	u32 pwm_pmic_bank;
@@ -138,6 +145,16 @@ struct drm_panel_esd_config {
 	u8 *return_buf;
 	u8 *status_buf;
 	u32 groups;
+	int esd_err_irq_gpio;
+	int esd_err_irq;
+};
+
+struct dsi_read_config {
+	bool enabled;
+	struct dsi_panel_cmd_set read_cmd;
+	u32 cmds_rlen;
+	u32 valid_bits;
+	u8 rbuf[64];
 };
 
 struct dsi_panel {
@@ -176,10 +193,33 @@ struct dsi_panel {
 	bool panel_initialized;
 	bool te_using_watchdog_timer;
 
+	bool dispparam_enabled;
+	bool on_cmds_tuning;
+	bool panel_reset_skip;
+
 	char dsc_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;
 
 	bool sync_broadcast_en;
+
+	u32 panel_on_dimming_delay;
+	u32 last_bl_lvl;
+	struct delayed_work cmds_work;
+
+	bool dsi_panel_off_mode;
+	/* check disable cabc when panel off */
+	bool onoff_mode_enabled;
+	bool disable_cabc;
+	struct dsi_read_config brightness_cmds;
+	struct dsi_read_config xy_coordinate_cmds;
+	struct dsi_read_config max_luminance_cmds;
+	struct dsi_read_config max_luminance_valid_cmds;
+	u8 panel_read_data[BUF_LEN_MAX];
+	u32 panel_bl_info[PANEL_BL_INFO_NUM];
+
+	/*analyze image by histogram, and then tuning backlight level*/
+	struct mutex hist_bl_lock;
+	u32 hist_bl_offset;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -205,8 +245,6 @@ static inline void dsi_panel_release_panel_lock(struct dsi_panel *panel)
 struct dsi_panel *dsi_panel_get(struct device *parent,
 				struct device_node *of_node,
 				int topology_override);
-
-int dsi_panel_trigger_esd_attack(struct dsi_panel *panel);
 
 void dsi_panel_put(struct dsi_panel *panel);
 
@@ -270,8 +308,5 @@ int dsi_panel_switch(struct dsi_panel *panel);
 int dsi_panel_post_switch(struct dsi_panel *panel);
 
 void dsi_dsc_pclk_param_calc(struct msm_display_dsc_info *dsc, int intf_width);
-
-int dsi_panel_parse_esd_reg_read_configs(struct dsi_panel *panel,
-				struct device_node *of_node);
 
 #endif /* _DSI_PANEL_H_ */
