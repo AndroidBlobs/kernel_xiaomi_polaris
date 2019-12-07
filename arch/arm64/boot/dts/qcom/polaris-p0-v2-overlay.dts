@@ -1,4 +1,5 @@
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,7 +11,6 @@
  * GNU General Public License for more details.
  */
 
-
 /dts-v1/;
 /plugin/;
 
@@ -21,12 +21,13 @@
 #include <dt-bindings/interrupt-controller/arm-gic.h>
 
 #include "sdm845-sde-display.dtsi"
+#include "polaris-p0.dtsi"
+#include "polaris-p0-pinctrl.dtsi"
 #include "sdm845-audio-overlay.dtsi"
-#include "sda845-svr.dtsi"
 
 / {
-	model = "Qualcomm Technologies, Inc. sda845 v2.1 SVR";
-	compatible = "qcom,sda845-svr", "qcom,sda845", "qcom,svr";
-	qcom,msm-id = <341 0x20001>;
-	qcom,board-id = <8 2>;
+	model = "Xiaomi Technologies, Inc. Polaris P0 v2";
+	compatible = "qcom,sdm845-mtp", "qcom,sdm845", "qcom,mtp";
+	qcom,msm-id = <321 0x20000>;
+	qcom,board-id = <40 0>;
 };

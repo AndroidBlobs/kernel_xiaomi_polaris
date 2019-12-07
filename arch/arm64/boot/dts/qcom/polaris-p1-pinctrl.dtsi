@@ -1,4 +1,6 @@
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+
+/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -9,17 +11,4 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-
-
-/dts-v1/;
-
-#include "sda845-v2.dtsi"
-#include "sdm845-sde-display.dtsi"
-#include "sda845-svr.dtsi"
-
-/ {
-	model = "Qualcomm Technologies, Inc. SDA845 V2 SVR";
-	compatible = "qcom,sda845-svr", "qcom,sda845", "qcom,svr";
-	qcom,msm-id = <341 0x20000>;
-	qcom,board-id = <8 2>;
-};
+#include "polaris-p0-pinctrl.dtsi"
