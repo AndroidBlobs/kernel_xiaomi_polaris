@@ -4,6 +4,7 @@
  * Copyright (C) 2001 Deep Blue Solutions Ltd.
  * Copyright (C) 2012 ARM Ltd.
  * Author: Catalin Marinas <catalin.marinas@arm.com>
+ * Copyright (C) 2018 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -184,14 +185,12 @@ ENDPROC(cpu_do_resume)
  *	- pgd_phys - physical address of new TTB
  */
 ENTRY(cpu_do_switch_mm)
-	mrs	x2, ttbr1_el1
 	mmid	x1, x1				// get mm->context.id
-	bfi	x2, x1, #48, #16		// set the ASID
-	msr	ttbr1_el1, x2			// in TTBR1 (since TCR.A1 is set)
+	bfi	x0, x1, #48, #16		// set the ASID
+	msr	ttbr0_el1, x0			// set TTBR0
 	isb
-	msr	ttbr0_el1, x0			// now update TTBR0
-	isb
-	b	post_ttbr_update_workaround	// Back to C code...
+	post_ttbr0_update_workaround
+	ret
 ENDPROC(cpu_do_switch_mm)
 
 	.pushsection ".idmap.text", "ax"
@@ -272,7 +271,7 @@ ENTRY(__cpu_setup)
 	 * both user and kernel.
 	 */
 	ldr	x10, =TCR_TxSZ(VA_BITS) | TCR_CACHE_FLAGS | TCR_SMP_FLAGS | \
-			TCR_TG_FLAGS | TCR_ASID16 | TCR_TBI0 | TCR_A1
+			TCR_TG_FLAGS | TCR_ASID16 | TCR_TBI0
 	tcr_set_idmap_t0sz	x10, x9
 
 	/*
@@ -290,12 +289,6 @@ ENTRY(__cpu_setup)
 	cbz	x9, 2f
 	cmp	x9, #2
 	b.lt	1f
-#ifdef CONFIG_ARM64_ERRATUM_1024718
-	/* Disable hardware DBM on Kryo3S */
-	cpu_midr_match MIDR_KRYO3S, MIDR_CPU_VAR_REV(7, 12), \
-			MIDR_CPU_VAR_REV(7, 13), x1, x2, x3, x4
-	cbnz	x1, 1f
-#endif
 	orr	x10, x10, #TCR_HD		// hardware Dirty flag update
 1:	orr	x10, x10, #TCR_HA		// hardware Access flag update
 2:
