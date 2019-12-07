@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,6 +20,8 @@
 #include "ufs-qcom-ice.h"
 #include "ufs-qcom-debugfs.h"
 #include "ufshcd.h"
+
+static struct workqueue_struct *ice_workqueue;
 
 #define UFS_QCOM_CRYPTO_LABEL "ufs-qcom-crypto"
 /* Timeout waiting for ICE initialization, that requires TZ access */
