@@ -608,8 +608,8 @@ TRACE_EVENT(sched_load_to_gov,
 		__field(	u64,	nt_ps			)
 		__field(	u64,	grp_nt_ps		)
 		__field(	u64,	pl			)
-		__field(	u64,    load			)
-		__field(	int,    big_task_rotation	)
+		__field(	u64,	load			)
+		__field(	int,	big_task_rotation	)
 	),
 
 	TP_fast_assign(
