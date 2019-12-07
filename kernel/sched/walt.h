@@ -40,6 +40,7 @@ extern unsigned int max_possible_efficiency;
 extern unsigned int min_possible_efficiency;
 extern unsigned int max_possible_freq;
 extern unsigned int sched_major_task_runtime;
+extern unsigned int __read_mostly sched_init_task_load_windows;
 extern unsigned int __read_mostly sched_load_granule;
 
 extern struct mutex cluster_lock;
@@ -284,12 +285,6 @@ void walt_irq_work(struct irq_work *irq_work);
 
 void walt_sched_init(struct rq *rq);
 
-extern int __read_mostly min_power_cpu;
-static inline int walt_start_cpu(int prev_cpu)
-{
-	return sysctl_sched_is_big_little ? prev_cpu : min_power_cpu;
-}
-
 static inline void walt_update_last_enqueue(struct task_struct *p)
 {
 	p->last_enqueued_ts = ktime_get_ns();
@@ -297,6 +292,12 @@ static inline void walt_update_last_enqueue(struct task_struct *p)
 extern void walt_rotate_work_init(void);
 extern void walt_rotation_checkpoint(int nr_big);
 extern unsigned int walt_rotation_enabled;
+
+extern int __read_mostly min_power_cpu;
+static inline int walt_start_cpu(int prev_cpu)
+{
+	return sysctl_sched_is_big_little ? prev_cpu : min_power_cpu;
+}
 
 #else /* CONFIG_SCHED_WALT */
 
